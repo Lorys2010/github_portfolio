@@ -1,0 +1,556 @@
+---
+title: "Statistica_Inferenziale_Project"
+author: "Lorenzo Canobbio"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    df_print: "paged"
+---
+# ANALISYS AND MODELING
+```{r message=FALSE, warning=FALSE}
+# PRELIMINARY ANALYSIS
+# Load packages
+library(ggplot2)
+library(dplyr)
+library(readr)
+```
+```{r message=FALSE, warning=FALSE}
+# Import dataset
+data <- read_csv("neonati.csv")
+
+#Rename variables
+colnames(data)[colnames(data) == "Anni.madre"] <- "età_madre"
+colnames(data)[colnames(data) == "N.gravidanze"] <- "numero_gravidanze"
+colnames(data)[colnames(data) == "Fumatrici"] <- "madre_fumatrice"
+colnames(data)[colnames(data) == "Gestazione"] <- "durata_gravidanza"
+colnames(data)[colnames(data) == "Peso"] <- "peso_neonato"
+colnames(data)[colnames(data) == "Lunghezza"] <- "lunghezza_neonato"
+colnames(data)[colnames(data) == "Cranio"] <- "diametro_cranio"
+colnames(data)[colnames(data) == "Tipo.parto"] <- "tipo_parto"
+colnames(data)[colnames(data) == "Ospedale"] <- "ospedale"
+colnames(data)[colnames(data) == "Sesso"] <- "sesso_neonato"
+```
+```{r message=FALSE, warning=FALSE}
+attach(data) # to use dataset variables in a directical way
+```
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+# EDA (Explorative Data Analysis) with ggplot2
+newborn_boxplot <- ggplot(data, aes(y = peso_neonato)) +
+  geom_boxplot(fill = 'gray90', color = "black", width = 0.2) +  
+  labs(title = "Distribution of Newborn Weight", y = "Newborn Weight (g)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),  
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)
+  )
+
+# Print the plot
+newborn_boxplot
+```
+This boxplot shows the distribution of newborn weights in the dataset.
+```{r fig.height=6, fig.width=12, warning=FALSE, out.width="100%"}
+# Mapping of Italian variable names to English labels
+label_mapping_1 <- c(
+  "tipo_parto" = "Type of Delivery",
+  "sesso_neonato" = "Newborn Sex",
+  "ospedale" = "Hospital",
+  "madre_fumatrice" = "Mother Smokes"
+)
+
+# Define a function that generates the boxplot
+plot_boxplot <- function(x_var_1) {
+  if (x_var_1 == "madre_fumatrice") {
+    ggplot(data, aes(x = factor(madre_fumatrice), y = peso_neonato)) +
+      geom_boxplot(fill = 'gray90', color = "black") +
+      labs(title = paste("Newborn Weight by", label_mapping_1[x_var_1]), 
+           x = label_mapping_1[x_var_1], 
+           y = "Newborn Weight (g)") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5), 
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.position = "none"  
+      )
+  } else {
+    ggplot(data, aes_string(x = x_var_1, y = "peso_neonato")) +
+      geom_boxplot(fill = 'gray90', color = "black") +
+      labs(title = paste("Newborn Weight by", label_mapping_1[x_var_1]), 
+           x = label_mapping_1[x_var_1], 
+           y = "Newborn Weight (g)") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5),   
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.position = "none"
+      )
+  }
+}
+
+# List of variables for the x-axis
+x_vars_1 <- c("tipo_parto", "sesso_neonato", "ospedale", "madre_fumatrice")
+
+# Iterate over the x_vars list and apply the function to each
+for (x_var_1 in x_vars_1) {
+  print(plot_boxplot(x_var_1))  
+}
+```
+These boxplots visually show the distribution of newborn weights for different types of delivery; the comparation of how newborn weights are distributed across various hospitals; the difference between the distribution of newborn weights between male and female newborns and the distribution of newborn weights for two groups based on the smoking status of the mother.
+```{r fig.height=6, fig.width=12, message=FALSE, warning=FALSE, out.width="100%"}
+# Create a mapping of Italian variable names to English labels
+label_mapping_2 <- c(
+  "età_madre" = "Mother's Age",
+  "numero_gravidanze" = "Number of Pregnancies",
+  "durata_gravidanza" = "Pregnancy Duration",
+  "lunghezza_neonato" = "Newborn Length",
+  "diametro_cranio" = "Head Diameter"
+)
+
+# Define a function that generates scatter plots
+plot_scatter_1 <- function(x_var_2) {
+  ggplot(data, aes_string(x = x_var_2, y = "peso_neonato")) +
+    geom_point(alpha = 0.6, color = "blue") +
+    geom_smooth(method = "lm", color = "red", linetype = "dashed") +  
+    labs(title = paste("Newborn Weight vs.", label_mapping_2[x_var_2]), 
+         x = label_mapping_2[x_var_2], 
+         y = "Newborn Weight (g)") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5),  
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10)
+    )
+}
+
+# List of variables for the x-axis (specified variables)
+x_vars_2 <- c("età_madre", "numero_gravidanze", "durata_gravidanza", 
+              "lunghezza_neonato", "diametro_cranio")
+
+# Iterate over the x_vars list and apply the function to each for scatter plots only
+for (x_var_2 in x_vars_2) {
+  print(plot_scatter_1(x_var_2))  
+}
+```
+We have different scatterplots here: the relationship between the mother's age and the newborn's birth weight; between the number of pregnancies the mother has had and the newborn's birth weight; between the duration of the pregnancy (in weeks) and the newborn's birth weight; between the newborn's length at birth and the newborn's weight and between the newborn's head diameter and the newborn's birth weight.
+These scatter plots provide insights into how various maternal and newborn characteristics (mother's age, number of pregnancies, pregnancy duration, newborn length, and head diameter) are related to the birth weight of the newborn.
+The linear regression line helps to visualize the trend (positive or negative) in each case, indicating whether there’s a correlation between the variables.
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+# Select only numeric variables in the dataset
+numeric_data <- data[sapply(data, is.numeric)]
+
+# Calculate the correlation matrix
+cor_matrix <- cor(numeric_data, use = "complete.obs") 
+```
+```{r message=FALSE, warning=FALSE}
+# load the corrplot package
+library(corrplot)
+```
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+# Create a heatmap of the correlation matrix
+corrplot(cor_matrix, method = "circle", type = "upper", 
+         col = colorRampPalette(c("blue", "white", "red"))(200),
+         title = "Correlation Matrix", 
+         mar = c(0, 0, 2, 0)) 
+```
+The correlation matrix shows the pairwise relationships between all numeric variables in the dataset.
+Each circle in the heatmap represents the correlation between two variables:
+- Positive correlation: A red circle indicates a positive relationship (when one variable increases, the other tends to increase as well).
+- Negative correlation: A blue circle indicates a negative relationship (when one variable increases, the other tends to decrease).
+- No or weak correlation: A white circle indicates little to no correlation between the variables.
+
+- Stronger correlations: Large red or blue circles indicate a stronger correlation (close to +1 or -1).
+- Weaker correlations: Small circles near white indicate weak or no correlation (close to 0).
+- Symmetry: The matrix is symmetric, meaning that the correlation between variable A and variable B is the same as the correlation between variable B and variable A.
+
+#1-In some hospitals, more cesarean sections are done
+```{r}
+# Create a contingency table of the two categorical variables: 'ospedale' (hospital) and 'tipo_parto' (birth type)
+table_hospital_birth_type <- table(ospedale, tipo_parto)
+
+# Perform the Chi-square test on the contingency table to check if there's an association between hospital and birth type
+chi_square_test <- chisq.test(table_hospital_birth_type)
+
+# Display the results of the Chi-square test
+chi_square_test
+```
+This type of test is used in contingency tables to assess the hypothesis of 
+independence between qualitative, quantitative variables in classes or 
+discrete quantitative variables. It can also be used for nominal-scale 
+variables, but it tells us nothing about the direction of the association 
+(in this sense, it is better to employ other indices, such as Kendall's correlation index, directly on the raw data).
+We have three keys to interpret:
+- Chi-square statistic: A larger value indicates a greater difference between
+observed and expected frequencies;
+- p-value: If the p-value is less than 0.05, you reject the null hypothesis and 
+conclude that there is a significant relationship between the hospital and the 
+type of birth (i.e., some hospitals perform more cesarean births);
+- Degrees of freedom (df): It indicates the number of categories considered in the test;
+The p-value, in this case, is particularly high (about 0.58): it means that 
+we cannot reject the null hypothesis, and it is concluded that there are no 
+hospitals in this sample in which more cesarean births are performed than 
+in others, according to the initial hypothesis system. There is no difference 
+in the proportions of cesarean births between hospitals (i.e., the type of
+birth is independent of the hospital).
+
+#2- The average weight and length of this sample of infants are significantly the same as those of the population
+```{r}
+# Population means
+population_mean_newborn_weight <- 3300  # Population mean newborn weight in grams
+population_mean_newborn_length <- 500    # Population mean newborn length in mm
+
+# Newborn weight test t
+t_test_mean_weight <- t.test(peso_neonato, mu = population_mean_newborn_weight)
+
+# Newborn length test t
+t_test_mean_length <- t.test(lunghezza_neonato, mu = population_mean_newborn_length)
+
+# Results print
+t_test_mean_weight
+t_test_mean_length
+```
+The t-test for a single sample is used to determine if the mean of a sample 
+is significantly different from a known or hypothesized population mean. 
+In this case, there's a comparation between the mean weight and the mean length of newborns in the sample with the ones of the population averages (3300 grams for weight and 500 mm for length).
+We have different types of parameters to evaluate:
+- The t-value is calculated as the difference between the sample mean and the 
+population mean, divided by the standard error of the sample. It tells you 
+how far the sample mean is from the population mean in terms of standard 
+deviations.
+The degrees of freedom (df) is used to determine the appropriate distribution 
+for the test statistic.
+The p-value tells you the probability of observing a sample mean at least as 
+extreme as the one you obtained, assuming the null hypothesis is true 
+(i.e., the sample mean equals the population mean). If the p-value is less 
+than 0.05 (commonly used threshold), you reject the null hypothesis, indicating
+that the sample mean is significantly different from the population mean.
+The confidence interval for the mean difference tells you the range in which the
+true population mean is likely to fall. A 95% confidence interval means that if
+you repeated the study many times, 95% of the intervals would contain the true 
+population mean.
+If the population mean lies outside the confidence interval, you can conclude 
+that the sample mean is significantly different from the population mean.
+The t-test for a single sample tests the null hypothesis that the mean of the 
+sample is equal to the population mean. Specifically, you're testing:
+- Null hypothesis (H₀): The sample mean of the newborn weight (or length) is
+equal to the population mean (3300 grams for weight, 500 mm for length).
+- Alternative hypothesis (H₁): The sample mean of the newborn weight (or length) 
+is not equal to the population mean.
+
+- For t_test_weight, it's possible to conclude that there is no significant difference between the sample mean newborn weight and the population one (p-value is about 0.13). So we can accept the null hypothesis.
+- For t_test_length, we can say that there is a significant difference between the two means due to a low p-value (2.2e-16). Here, we have to reject the null hypothesis.
+
+#3- Anthropometric measurements are significantly different between the two sexes
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+# Conditional boxplots
+# Mapping of Italian variable names to English labels
+label <- c(
+  "peso_neonato" = "Newborn Weight",
+  "lunghezza_neonato" = "Newborn Length",
+  "diametro_cranio" = "Head Circumference"
+)
+
+# List of variables to plot (in Italian)
+variables_to_plot <- c("peso_neonato", "lunghezza_neonato", "diametro_cranio")
+
+# Iterate over each variable and create the boxplot
+for (var in variables_to_plot) {
+  boxplot_formula <- as.formula(paste(var, "~ sesso_neonato"))
+  boxplot(boxplot_formula, 
+          main = paste(label[var], "by Newborn Sex"), 
+          xlab = "Newborn Sex", 
+          ylab = paste(label[var]))
+}
+```
+```{r}
+# Perform independent t-tests
+t_test_sex_weight <- t.test(peso_neonato ~ sesso_neonato)
+t_test_sex_length <- t.test(lunghezza_neonato ~ sesso_neonato)
+t_test_sex_skull <- t.test(diametro_cranio ~ sesso_neonato)
+
+# Display the results
+t_test_sex_weight
+t_test_sex_length
+t_test_sex_skull
+```
+For t_test_sex_weight, we reject the null hypothesis, then it can be stated, 
+with a significance level of 1% (thus with a confidence level of 99%), 
+that the weight of the newborn turns out to be significantly different for 
+both sexes. Therefore, we accept the alternative hypothesis that the difference
+in the averages between group F and group M is not 0.
+It's possible to reject the null hypotesis for t_test_sex_length and for 
+t_test_sex_skull (p-value are very low), too and this can be stated with a significance level of 1% (thus with a confidence level of 99%). So, there is a significant difference in newborn length and newborn skull diameter for both sexes.
+
+```{r}
+# CREATION OF THE REGRESSION MODEL
+summary(data)
+n <- nrow(data)
+moments::skewness(peso_neonato) #negative skewness
+moments::kurtosis(peso_neonato)-3 #leptokurtosis
+shapiro.test(peso_neonato) #no Gaussian distribution
+options(scipen=0)
+full_mod <- lm(peso_neonato ~., data = data)
+summary(full_mod)
+```
+Here, we have a linear regression model, in which we included all the explainatory variables, in order to predict the response variable (peso_neonato).
+We have several parameters in the summary output. These parameters provide insights into the model's performance, coefficients, and statistical 
+significance. Here's a breakdown of the key components of the summary:
+- In Residuals -> Min, 1Q (first quartile), Median, 3Q (third quartile), Max: these represent the distribution of the residuals (the differences between the observed and predicted values). Ideally, residuals should be centered around 0 with a symmetric distribution. Large deviations could suggest model misfit;
+- Residual standard error -> This is the standard deviation of the residuals, which indicates the typical size of the error in your predictions. A smaller value is better;
+- Coefficients -> this section shows the estimated coefficients (betas) for each independent variable, along with their standard errors, t-values, and p-values;
+- Multiple R-squared -> this statistic shows the proportion of variance in the response variable (peso_neonato) that is explained by the independent variables in the model. It ranges from 0 to 1, with higher values indicating a better fit;
+- Adjusted R-squared -> this version of R-squared adjusts for the number of predictors in the model, providing a more accurate measure of model performance when comparing models with different numbers of predictors;
+- F-statistic -> it tests the overall significance of the model. It compares the 
+model with no predictors (intercept-only model) against the model you’ve fitted.
+The associated p-value indicates whether the independent variables, as a whole, 
+significantly predict the dependent variable (peso_neonato). A small p-value suggests that the model is statistically significant.
+
+Let's talk about the interpretation of the coefficients estimates in this model:
+età_madre, madre_fumatrice and ospedale show parameters that are not particularly significant, given their high p-values; while, numero_gravidanze, durata_gravidanza, lunghezza_neonato, diametro_cranio and sesso_neonato show parameters that are particularly significant, in order to predict the dipendent variable peso_neonato:
+- numero_gravidanze -> it is statistically significative with an alpha = 5% (but not with an alpha = 1%): as pregnancy increases, infant weight increases, on average, by 11.27 grams, ceteris paribus (holding steady the marginal effects of the other explanatory variables);
+- durata_gravidanza <- it is statistically significative with an alpha = 1%: as one week of gestation increases, the infant's weight increases, on average, by about 32.57 grams, ceteris paribus;
+- lunghezza_neonato <- it is statistically significative with an alpha = 1%: as the infant's length increases by one millimeter, the weight of the infant itself increases, on average, by about 10.29 grams, ceteris paribus;
+- diametro_cranio <- it is statistically significative with an alpha = 1%: as the infant's skull diameter increases by one millimeter, the weight of the infant itself increases, on average, by about 10.47 grams, ceteris paribus;
+- tipo_parto <- it is statistically significative with an alpha = 5% (but not with an alpha = 1%): this parameter can be interpreted as the difference in average weight between infants who are born by natural childbirth versus those who are born by cesarean section: those born by natural childbirth will have, on average, a weight approximately 29.53 grams greater than those born by cesarean section, ceteris paribus;
+- ospedale <- it is statistically significative with an alpha = 5% (but not with an alpha = 1%), but only this category (ospedaleosp3), taking ospedaleosp1 as the baseline: infants born in hospital 3 have, on average, a 28.1 grams greater weight than those born in hospital 1, ceteris paribus;
+- sesso_neonato <- it is statistically significative with an alpha = 1%: male infants have, on average, 77.54 grams more weight than female infants, ceteris paribus.
+R^2 and adjusted R^2 (this is more relevant to evaluate the real contribution of a new variable in the model) are about 0.73: they are good values but a better model can be sought in order to increase the proportion of variance explained of the dependent variable by the explanatory variables.
+```{r}
+shapiro.test(peso_neonato)
+```
+Through the rejection of the basic hypothesis of the Shapiro-Wilk normality test, it can be seen that this variable does not distribute normally, and this may suggest that the linear regression model may not be the best fit for these data. Need to investigate.
+
+```{r}
+# SELECTION OF THE OPTIMAL MODEL
+mod1 <- update(full_mod,~.-età_madre-madre_fumatrice-ospedale)
+summary(mod1)
+```
+In this model, we removed all those explanatory variables that were found to be not statistically significant in the full model: now the p-values of numero_gravidanze and tipo_parto have become lower, improving the significance of the parameters referring to these variables. Note, however, that despite the improvement in the significance of certain parameters, the adjusted R^2 and R^2 turn out to be even lower, but only slightly, than those presented in the full model. Let us explore other types of models by adding interaction effects and/or nonlinear effects.
+```{r}
+mod2 <- update(mod1,~.+I(durata_gravidanza^2))
+summary(mod2)
+```
+In this new model, having introduced the quadratic term I(durata_gravidanza^2), given the nonlinear relationship between this variable and peso_neonato, seems to have had only the effect of worsening the significance of durata_gravidanza, where in contrast the significance of the other parameters appears to be fairly unchanged.
+It was decided to include such a term because of the curvature in the relationship between peso_neonato and durata_gravidanza but, at equal significance, it is better to prefer more parsimonious models (since even that adjusted R^2 and R^2 remained about the same).
+```{r}
+options(scipen = 999)
+mod3 <- update(mod1,~.+lunghezza_neonato*diametro_cranio)
+summary(mod3)
+```
+Here, it was decided to include an interaction term between lunghezza_neonato and diametro_cranio (two anthropometric measures closely related to peso_neonato): in this case, the introduction of such a term had the effect of worsening the significance of the parameters of lunghezza_neonato and diametro_cranio taken individually. This suggests that the introduction of an interaction term turns out to be unnecessary.
+```{r}
+options(scipen = 0)
+mod4 <- update(mod1,~.-tipo_parto)
+summary(mod4)
+```
+Here, it was decided to eliminate the variable tipo_parto, which had a significant parameter only at a significance level of 5% (but not 1%): the p-values of the model parameters tended to remain the same (except for some slight increase). The proportions of variance explained are slightly lower than those presented in mod1, but they do not change much.
+```{r}
+BIC(mod1, mod2, mod3, mod4)
+AIC(mod1, mod2, mod3, mod4)
+```
+```{r message=FALSE, warning=FALSE}
+stepwise_mod <- MASS::stepAIC(full_mod,
+                              direction = "both",
+                              k=log(n))
+```
+```{r}
+summary(stepwise_mod)
+BIC(mod4, stepwise_mod)
+car::vif(mod4) #no multicollinearity between explainatory variables (VIF < 5)
+```
+The stepwise method (stepAIC) shows that mod4 turns out to be the best model (but AIC and BIC show that mod3 is the best model), and the one that best combines significance of the parameters in the model and parsimony, with the same proportion of variance explained compared to the other models (although mod1 has a slightly greater adjusted R^2 than mod4).
+
+```{r message=FALSE, warning=FALSE}
+# MODEL QUALITY ANALYSIS
+#It is also necessary to investigate the erratic part of the model: assess
+#whether the assumptions of normality, homoschedasticity, and uncorrelation 
+#are met.
+library(lmtest)
+```
+```{r}
+shapiro.test(residuals(mod4)) 
+#we reject the null hypothesis that the model residuals distribute according 
+#to a normal distribution
+```
+```{r}
+bptest(mod4) 
+#we reject the null hypothesis of homoschedasticity (constant variance) of 
+#the residuals
+```
+```{r}
+dwtest(mod4) 
+#on the other hand, the null hypothesis of no autocorrelation between residuals #is not rejected
+```
+```{r}
+#Basically, already the response variable does not distribute according to a 
+#normal distribution
+shapiro.test(peso_neonato)
+moments::skewness(peso_neonato)
+plot(density(peso_neonato))
+```
+```{r}
+#It is necessary to find another type of model that fits the data better
+glm_mod <- glm(peso_neonato ~ numero_gravidanze + durata_gravidanza + lunghezza_neonato + diametro_cranio + sesso_neonato, 
+               data = data, family = gaussian(link = "identity"))
+summary(glm_mod)
+library(sandwich)
+coeftest(glm_mod, vcov = vcovHC(glm_mod, type = "HC3"))
+```
+If the residuals show heteroschedasticity (nonconstant variance), the standard 
+errors of the LM or GLM model without correction are underestimated or overestimated, leading to misinterpretations. The use of vcovHC() corrects this problem, making inferences more reliable. Although the homoschedasticity test (e.g., Breusch-Pagan) indicated a violation, the structure of the LM model was already robust enough not to be affected by this violation. Heteroschedasticity primarily impacts the standard errors and thus the significance of the coefficients. If the p-values do not change after correction, it means that the bias was minimal.
+The original LM model found with stepwise was already optimal in terms of variable selection and data explanation. As for the violation of the normality assumption of the residuals, it can be seen that the distribution of mod4 turns out to be approximately normal, has a slight negative skewness (about -0.65) and a leptokurtic shape (about 2.03).
+```{r}
+#Returning to the optimal model found via stepwise, which coincides with mod4:
+summary(mod4)
+```
+In this case, we have an R^2 of 0.727 and an adjusted R^2 of 0.7265 : the model exhibits a good degree of fit to the data, and is at values that we also find for other models (although less optimal than this one).
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+#Now, we move on to investigate graphically the residuals of mod4:
+par(mfrow=c(2,2))
+plot(mod4)
+```
+- The graph of residuals vs fitted values allows us to assess whether there are trends in the distribution of the residuals themselves or whether there is a constant variability: the dots should be scattered randomly around the mean of 0. A slightly curved pattern seems to present itself, and it appears that the information was not filtered well by the regressors and that this was spilled over to the residuals (note the rejection of Breusch-Pagan Test, but we saw that the bias was minimal, given the correction made for the variance);
+- The Q-Q plot of standardized residuals allows us to check whether the errors are normally distributed: in this case, it seems that the dots concentrate well, except for some dots in the tails (despite of the rejection of the previously Shapiro Test);
+- The scale-location plot is used to determine whether the distribution of residuals is constant over the entire range of expected values and is useful in detecting outliers. This graph should not display patterns in the points but only in a horizontal line around a value of y that will indicate a constant variance: there is a fairly sharp concentration of points;
+- The graph residuals vs. leverage (standardized residuals vs. leverage points) is intended to highlight whether there are any high leverage data that might affect the model estimate. In the same graph, we find Cook's distance, which is another measure of the importance of each observation to the regression. Cook's distance is defined as a standardized measure of the distance between the OLS estimates and the same vector obtained by removal of the i-th observation.
+Small distances mean that removal of that observation has little effect on the regression results. Distances greater than 1 are suspicious and suggest the presence of a possible high-leverage or poor model: In this case, observation 1551 is between the thresholds of 0.5 (warning) and 1 (alarm), thus potentially influential.
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+#Cook's distance
+cook <- cooks.distance(mod4)
+plot(cook)
+max(cook)
+```
+We can see the observation 1551 in this graph.
+
+# FORECASTS AND RESULTS
+```{r}
+prediction <- predict(mod4, new_data = data.frame(numero_gravidanze = 3, 
+                                                 durata_gravidanza = 39, 
+                                                 sesso_neonato = 'F'))
+```
+prediction is the predicted value generated by the best model (mod4) for a mother with 3 pregnancies, who will give birth at 39 weeks of gestation, and has a female baby.
+prediction will contain a single prediction based on the input characteristics (3 pregnancies, 39 weeks of gestation, female baby). If the model was trained to predict, for example, the weight of the newborn, then prediction will return the predicted weight of the newborn for this combination of features.
+
+# VISUALIZATIONS
+```{r message=FALSE, warning=FALSE}
+# Predict the baby's weight based on the model (mod4)
+data$pred_peso_neonato <- round(predict(mod4, data), 2)
+attach(data)
+```
+```{r fig.height=6, fig.width=12, message=FALSE, warning=FALSE, out.width="100%"}
+# Create a mapping of Italian variable names to English labels for x-axis variables
+label_mapping_3 <- c(
+  "numero_gravidanze" = "Number of Pregnancies",
+  "durata_gravidanza" = "Pregnancy Duration",
+  "lunghezza_neonato" = "Newborn Length",
+  "diametro_cranio" = "Head Diameter"
+)
+
+# Define a function that generates scatter plots for a given x variable
+plot_scatter_2 <- function(x_var_3) {
+  ggplot(data, aes_string(x = x_var_3, y = "pred_peso_neonato")) +
+    geom_point(alpha = 0.3, color = "blue", size = 1) +  
+    geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1) +  
+    labs(
+      title = paste("Impact of", label_mapping_3[x_var_3], "on Predicted Newborn Weight"),
+      x = label_mapping_3[x_var_3],
+      y = "Predicted Newborn Weight (grams)"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10)
+    )
+}
+
+# List of variables for the x-axis
+x_vars_3 <- c("numero_gravidanze", "durata_gravidanza", "lunghezza_neonato", 
+            "diametro_cranio")
+
+# Iterate over the list of x-axis variables and print the plots
+for (x_var_3 in x_vars_3) {
+  print(plot_scatter_2(x_var_3))
+}
+```
+Here, we have various scatter plots that examine the relationships between predicted newborn weight (pred_peso_neonato) and four different predictor variables: Number of Pregnancies (numero_gravidanze), Pregnancy Duration (durata_gravidanza), Newborn Length (lunghezza_neonato), and Head Diameter (diametro_cranio).
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+# Box plot showing the relationship between the baby's sex and predicted baby weight
+pred_boxplot <- ggplot(data, aes(x = sesso_neonato, y = pred_peso_neonato)) +
+  geom_boxplot(fill = 'gray90') +  
+  labs(
+    title = "Impact of Newborn's Sex on Predicted Newborn Weight",
+    x = "Newborn's Sex",
+    y = "Predicted Newborn Weight (grams)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)
+  )
+
+pred_boxplot
+```
+This boxplot shows the relationship between newborn sex (sesso_neonato) and predicted newborn weight (pred_peso_neonato).
+```{r message=FALSE, warning=FALSE}
+library(plotly)
+```
+```{r, fig.width=12, fig.height=6, out.width="100%"}
+# Create a mapping of Italian variable names to English labels for x and y axes
+label_mapping_4 <- c(
+  "numero_gravidanze" = "Number of Pregnancies",
+  "durata_gravidanza" = "Pregnancy Duration (weeks)",
+  "lunghezza_neonato" = "Newborn Length (mm)",
+  "diametro_cranio" = "Head Diameter (mm)"
+)
+
+# Create a mapping of variable combinations for x and y
+variable_combinations <- list(
+  c("numero_gravidanze", "durata_gravidanza", "Impact of Number of Pregnancies and Pregnancy Duration on Predicted Newborn Weight"),
+  c("lunghezza_neonato", "diametro_cranio", "Impact of Newborn Length and Cranial Diameter on Predicted Newborn Weight")
+)
+
+# Define a function to generate 3D scatter plots
+plot_3d_scatter_1 <- function(x_var, y_var, title) {
+  plot_ly(data, 
+          x = ~get(x_var),  
+          y = ~get(y_var),  
+          z = ~pred_peso_neonato,  
+          type = 'scatter3d',      
+          mode = 'markers',        
+          marker = list(
+            size = 5,              
+            color = ~pred_peso_neonato,  
+            colorscale = 'Viridis',  
+            showscale = TRUE        
+          ),
+          text = ~paste(x_var, ": ", get(x_var),   
+                        "<br>", y_var, ": ", get(y_var), 
+                        "<br>pred_peso_neonato: ", pred_peso_neonato),  
+          hoverinfo = 'text'  
+  ) %>%
+    layout(
+      title = title,  
+      scene = list(
+        xaxis = list(title = label_mapping_4[x_var]),
+        yaxis = list(title = label_mapping_4[y_var]),
+        zaxis = list(title = 'Predicted Newborn Weight (grams)'),  
+        bgcolor = 'rgba(240, 240, 240, 0.95)',  
+        gridcolor = 'rgba(200, 200, 200, 0.5)'  
+      ),
+      plot_bgcolor = 'rgba(255, 255, 255, 0.95)'  
+    )
+}
+
+# Iterate over the variable combinations and generate each plot separately
+plotly_1 <- plot_3d_scatter_1(variable_combinations[[1]][1], variable_combinations[[1]][2], variable_combinations[[1]][3])
+plotly_2 <- plot_3d_scatter_1(variable_combinations[[2]][1], variable_combinations[[2]][2], variable_combinations[[2]][3])
+
+# Show the results
+plotly_1
+plotly_2
+```
+- First plot: Shows the relationship between number of pregnancies and pregnancy duration, and how they impact the predicted newborn weight;
+- Second plot: Displays the relationship between newborn length and cranial diameter, and their effect on predicted newborn weight.
